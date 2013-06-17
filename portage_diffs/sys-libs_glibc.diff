@@ -1,0 +1,171 @@
+diff -urpN usr/portage/sys-libs/glibc/files/eblits/common.eblit overlay/cpcf/sys-libs/glibc/files/eblits/common.eblit
+--- usr/portage/sys-libs/glibc/files/eblits/common.eblit	2012-12-28 20:37:36.000000000 +0100
++++ overlay/cpcf/sys-libs/glibc/files/eblits/common.eblit	2013-06-17 15:12:59.442716589 +0200
+@@ -16,9 +16,9 @@ alt_headers() {
+ }
+ alt_build_headers() {
+ 	if [[ -z ${ALT_BUILD_HEADERS} ]] ; then
+-		ALT_BUILD_HEADERS=$(alt_headers)
++		ALT_BUILD_HEADERS=${EPREFIX}$(alt_headers)
+ 		if tc-is-cross-compiler ; then
+-			ALT_BUILD_HEADERS=${ROOT}$(alt_headers)
++			ALT_BUILD_HEADERS=${EROOT}$(alt_headers)
+ 			if [[ ! -e ${ALT_BUILD_HEADERS}/linux/version.h ]] ; then
+ 				local header_path=$(echo '#include <linux/version.h>' | $(tc-getCPP ${CTARGET}) ${CFLAGS} 2>&1 | grep -o '[^"]*linux/version.h')
+ 				ALT_BUILD_HEADERS=${header_path%/linux/version.h}
+diff -urpN usr/portage/sys-libs/glibc/files/eblits/src_install.eblit overlay/cpcf/sys-libs/glibc/files/eblits/src_install.eblit
+--- usr/portage/sys-libs/glibc/files/eblits/src_install.eblit	2013-04-10 20:02:24.000000000 +0200
++++ overlay/cpcf/sys-libs/glibc/files/eblits/src_install.eblit	2013-06-09 09:24:50.209008127 +0200
+@@ -10,7 +10,7 @@ toolchain-glibc_src_install() {
+ 		GBUILDDIR=${WORKDIR}/build-${ABI}-${CTARGET}-nptl
+ 	fi
+ 
+-	local install_root="${D}$(alt_prefix)"
++	local install_root="${ED}$(alt_prefix)"
+ 	if want_linuxthreads ; then
+ 		cd "${WORKDIR}"/build-${ABI}-${CTARGET}-linuxthreads
+ 		einfo "Installing GLIBC ${ABI} with linuxthreads ..."
+@@ -34,37 +34,37 @@ toolchain-glibc_src_install() {
+ 			else
+ 				src_lib=$(eval echo */${l})
+ 			fi
+-			cp -a ${src_lib} "${D}"$(alt_libdir)/tls/${l} || die "copying nptl ${l}"
++			cp -a ${src_lib} "${ED}"$(alt_libdir)/tls/${l} || die "copying nptl ${l}"
+ 			fperms a+rx $(alt_libdir)/tls/${l}
+ 			dosym ${l} $(alt_libdir)/tls/$(scanelf -qSF'%S#F' ${src_lib})
+ 
+ 			# then grab the linker script or the symlink ...
+-			if [[ -L ${D}$(alt_usrlibdir)/${l} ]] ; then
++			if [[ -L ${ED}$(alt_usrlibdir)/${l} ]] ; then
+ 				dosym $(alt_libdir)/tls/${l} $(alt_usrlibdir)/nptl/${l}
+ 			else
+ 				sed \
+ 					-e "s:/${l}:/tls/${l}:g" \
+ 					-e "s:/${l/%.so/_nonshared.a}:/nptl/${l/%.so/_nonshared.a}:g" \
+-					"${D}"$(alt_usrlibdir)/${l} > "${D}"$(alt_usrlibdir)/nptl/${l}
++					"${ED}"$(alt_usrlibdir)/${l} > "${ED}"$(alt_usrlibdir)/nptl/${l}
+ 			fi
+ 
+ 			# then grab the static lib ...
+ 			src_lib=${src_lib/%.so/.a}
+ 			[[ ! -e ${src_lib} ]] && src_lib=${src_lib/%.a/_pic.a}
+-			cp -a ${src_lib} "${D}"$(alt_usrlibdir)/nptl/ || die "copying nptl ${src_lib}"
++			cp -a ${src_lib} "${ED}"$(alt_usrlibdir)/nptl/ || die "copying nptl ${src_lib}"
+ 			src_lib=${src_lib/%.a/_nonshared.a}
+ 			if [[ -e ${src_lib} ]] ; then
+-				cp -a ${src_lib} "${D}"$(alt_usrlibdir)/nptl/ || die "copying nptl ${src_lib}"
++				cp -a ${src_lib} "${ED}"$(alt_usrlibdir)/nptl/ || die "copying nptl ${src_lib}"
+ 			fi
+ 		done
+ 
+ 		# use the nptl linker instead of the linuxthreads one as the linuxthreads
+ 		# one may lack TLS support and that can be really bad for business
+-		cp -a elf/ld.so "${D}"$(alt_libdir)/$(scanelf -qSF'%S#F' elf/ld.so) || die "copying nptl interp"
++		cp -a elf/ld.so "${ED}"$(alt_libdir)/$(scanelf -qSF'%S#F' elf/ld.so) || die "copying nptl interp"
+ 	fi
+ 
+ 	# We'll take care of the cache ourselves
+-	rm -f "${D}"/etc/ld.so.cache
++	rm -f "${ED}"/etc/ld.so.cache
+ 
+ 	# Everything past this point just needs to be done once ...
+ 	is_final_abi || return 0
+@@ -92,7 +92,7 @@ toolchain-glibc_src_install() {
+ 		sparc32 /lib/ld-linux.so.2
+ 		sparc64 /lib64/ld-linux.so.2
+ 	)
+-	if [[ ${SYMLINK_LIB} == "yes" ]] && [[ ! -e ${D}/$(alt_prefix)/lib ]] ; then
++	if [[ ${SYMLINK_LIB} == "yes" ]] && [[ ! -e ${ED}/$(alt_prefix)/lib ]] ; then
+ 		dosym $(get_abi_LIBDIR ${DEFAULT_ABI}) $(alt_prefix)/lib
+ 	fi
+ 	for (( i = 0; i < ${#ldso_abi_list[@]}; i += 2 )) ; do
+@@ -100,7 +100,7 @@ toolchain-glibc_src_install() {
+ 		has ${ldso_abi} $(get_install_abis) || continue
+ 
+ 		ldso_name="$(alt_prefix)${ldso_abi_list[i+1]}"
+-		if [[ ! -L ${D}/${ldso_name} && ! -e ${D}/${ldso_name} ]] ; then
++		if [[ ! -L ${ED}/${ldso_name} && ! -e ${ED}/${ldso_name} ]] ; then
+ 			dosym ../$(get_abi_LIBDIR ${ldso_abi})/${ldso_name##*/} ${ldso_name}
+ 		fi
+ 	done
+@@ -109,7 +109,7 @@ toolchain-glibc_src_install() {
+ 	# binary to be setuid.  This is because the default owners/perms will be
+ 	# exactly what we want.
+ 	if in_iuse suid && ! use suid ; then
+-		find "${D}" -name pt_chown -exec chmod -s {} +
++		find "${ED}" -name pt_chown -exec chmod -s {} +
+ 	fi
+ 
+ 	#################################################################
+@@ -122,9 +122,9 @@ toolchain-glibc_src_install() {
+ 		# gcc likes to use relative paths to get to its multilibs like
+ 		# /usr/lib/../lib64/.  So while we don't install any files into
+ 		# /usr/lib/, we do need it to exist.
+-		cd "${D}"$(alt_libdir)/..
++		cd "${ED}"$(alt_libdir)/..
+ 		[[ -e lib ]] || mkdir lib
+-		cd "${D}"$(alt_usrlibdir)/..
++		cd "${ED}"$(alt_usrlibdir)/..
+ 		[[ -e lib ]] || mkdir lib
+ 
+ 		dosym usr/include $(alt_prefix)/sys-include
+@@ -137,7 +137,7 @@ toolchain-glibc_src_install() {
+ 		-e "/^#/d" \
+ 		-e "/SUPPORTED-LOCALES=/d" \
+ 		-e "s: \\\\::g" -e "s:/: :g" \
+-		"${S}"/localedata/SUPPORTED > "${D}"/usr/share/i18n/SUPPORTED \
++		"${S}"/localedata/SUPPORTED > "${ED}"/usr/share/i18n/SUPPORTED \
+ 		|| die "generating /usr/share/i18n/SUPPORTED failed"
+ 	cd "${WORKDIR}"/extra/locale
+ 	dosbin locale-gen || die
+@@ -150,7 +150,7 @@ toolchain-glibc_src_install() {
+ 	local a
+ 	keepdir /usr/$(get_libdir)/locale
+ 	for a in $(get_install_abis) ; do
+-		if [[ ! -e ${D}/usr/$(get_abi_LIBDIR ${a})/locale ]] ; then
++		if [[ ! -e ${ED}/usr/$(get_abi_LIBDIR ${a})/locale ]] ; then
+ 			dosym /usr/$(get_libdir)/locale /usr/$(get_abi_LIBDIR ${a})/locale
+ 		fi
+ 	done
+@@ -166,13 +166,13 @@ toolchain-glibc_src_install() {
+ 		doinitd "${WORKDIR}"/extra/etc/nscd || die
+ 
+ 		local nscd_args=(
+-			-e "s:@PIDFILE@:$(strings "${D}"/usr/sbin/nscd | grep nscd.pid):"
++			-e "s:@PIDFILE@:$(strings "${ED}"/usr/sbin/nscd | grep nscd.pid):"
+ 		)
+ 		version_is_at_least 2.16 || nscd_args+=( -e 's: --foreground : :' )
+-		sed -i "${nscd_args[@]}" "${D}"/etc/init.d/nscd
++		sed -i "${nscd_args[@]}" "${ED}"/etc/init.d/nscd
+ 	else
+ 		# Do this since extra/etc/*.conf above might have nscd.conf.
+-		rm -f "${D}"/etc/nscd.conf
++		rm -f "${ED}"/etc/nscd.conf
+ 	fi
+ 
+ 	echo 'LDPATH="include ld.so.conf.d/*.conf"' > "${T}"/00glibc
+@@ -184,13 +184,13 @@ toolchain-glibc_src_install() {
+ 
+ 	# Prevent overwriting of the /etc/localtime symlink.  We'll handle the
+ 	# creation of the "factory" symlink in pkg_postinst().
+-	rm -f "${D}"/etc/localtime
++	rm -f "${ED}"/etc/localtime
+ }
+ 
+ toolchain-glibc_headers_install() {
+ 	local GBUILDDIR=${WORKDIR}/build-${ABI}-${CTARGET}-headers
+ 	cd "${GBUILDDIR}"
+-	emake install_root="${D}$(alt_prefix)" install-headers || die
++	emake install_root="${ED}$(alt_prefix)" install-headers || die
+ 	if ! version_is_at_least 2.16 ; then
+ 		insinto $(alt_headers)/bits
+ 		doins bits/stdio_lim.h || die
+@@ -216,7 +216,7 @@ src_strip() {
+ 	# if user has stripping enabled and does not have split debug turned on,
+ 	# then leave the debugging sections in libpthread.
+ 	if ! has nostrip ${FEATURES} && ! has splitdebug ${FEATURES} ; then
+-		${STRIP:-${CTARGET}-strip} --strip-debug "${D}"/*/libpthread-*.so
++		${STRIP:-${CTARGET}-strip} --strip-debug "${ED}"/*/libpthread-*.so
+ 	fi
+ }
+ 
