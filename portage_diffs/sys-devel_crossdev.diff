@@ -1,0 +1,24 @@
+--- usr/portage/sys-devel/crossdev/crossdev-99999999.ebuild	2012-04-01 12:02:51.000000000 +0200
++++ overlay/cpcf/sys-devel/crossdev/crossdev-99999999.ebuild	2013-06-09 02:34:21.097024318 +0200
+@@ -4,6 +4,8 @@
+ 
+ EAPI="4"
+ 
++inherit eutils prefix
++
+ if [[ ${PV} == "99999999" ]] ; then
+ 	EGIT_REPO_URI="git://git.overlays.gentoo.org/proj/crossdev.git"
+ 	inherit git-2
+@@ -27,6 +29,12 @@ RDEPEND=">=sys-apps/portage-2.1
+ 	!sys-devel/crossdev-wrappers"
+ DEPEND="app-arch/xz-utils"
+ 
++src_prepare() {
++	default
++	epatch "${FILESDIR}"/crossdev-git-eprefix.patch
++	eprefixify crossdev wrappers/cross-pkg-config wrappers/etc/portage/make.conf
++}
++
+ src_install() {
+ 	default
+ 	if [[ "${PV}" == "99999999" ]] ; then

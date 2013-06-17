@@ -1,0 +1,156 @@
+diff --git a/crossdev b/crossdev
+index f989556..b208931 100755
+--- a/crossdev
++++ b/crossdev
+@@ -12,9 +12,9 @@ if [[ ${ROOT:-/} != "/" ]] ; then
+ 	exit 2
+ fi
+ 
+-CONFIGROOT="${PORTAGE_CONFIGROOT}/etc/portage"
++CONFIGROOT="@GENTOO_PORTAGE_EPREFIX@${PORTAGE_CONFIGROOT}/etc/portage"
+ 
+-source /etc/init.d/functions.sh || exit 1
++source @GENTOO_PORTAGE_EPREFIX@/etc/init.d/functions.sh || exit 1
+ esyslog() { :; }
+ die_logs() {
+ 	echo
+@@ -316,7 +316,7 @@ setup_portage_vars() {
+ 	CROSSDEV_OVERLAY=${CROSSDEV_OVERLAY%% *}
+ 
+ 	# make sure we have a valid logdir
+-	: ${PORT_LOGDIR:=/var/log/portage}
++	: ${PORT_LOGDIR:=@GENTOO_PORTAGE_EPREFIX@/var/log/portage}
+ 	mkdir -p "${PORT_LOGDIR}"
+ }
+ 
+@@ -337,13 +337,13 @@ uninstall() {
+ 	done
+ 	rm -rf "${CONFIGROOT}"/env/cross-${CTARGET}
+ 	rmdir "${CONFIGROOT}"/env 2>/dev/null
+-	rm -f /etc/revdep-rebuild/05cross-${CTARGET}
+-	rmdir /etc/revdep-rebuild 2>/dev/null
++	rm -f @GENTOO_PORTAGE_EPREFIX@/etc/revdep-rebuild/05cross-${CTARGET}
++	rmdir @GENTOO_PORTAGE_EPREFIX@/etc/revdep-rebuild 2>/dev/null
+ 
+-	rmdir /var/db/pkg/cross-${CTARGET} 2>/dev/null
+-	if [[ -d /var/db/pkg/cross-${CTARGET} ]] ; then
++	rmdir @GENTOO_PORTAGE_EPREFIX@/var/db/pkg/cross-${CTARGET} 2>/dev/null
++	if [[ -d @GENTOO_PORTAGE_EPREFIX@/var/db/pkg/cross-${CTARGET} ]] ; then
+ 		export CLEAN_DELAY=0
+-		cd /var/db/pkg
++		cd @GENTOO_PORTAGE_EPREFIX@/var/db/pkg
+ 		local pkgs=( cross-${CTARGET}/* )
+ 		emerge -qC ${pkgs[@]/#/=} || exit 1
+ 	else
+@@ -356,29 +356,29 @@ uninstall() {
+ 		gcc-{ar,nm,ranlib} gccbug gprof ld nm objcopy objdump \
+ 		ranlib readelf size strings strip windmc windres
+ 	do
+-		rm -f /usr/bin/${CTARGET}-${f} /usr/${CTARGET}/bin/${f}
++		rm -f @GENTOO_PORTAGE_EPREFIX@/usr/bin/${CTARGET}-${f} @GENTOO_PORTAGE_EPREFIX@/usr/${CTARGET}/bin/${f}
+ 	done
+-	rm -f /usr/${CTARGET}/{sys-include,usr}
+-	rmdir /usr/${CTARGET}/{include/asm,include} 2>/dev/null
+-	rm -f /usr/bin/${CTARGET}-{gcc,{c,g}++,cpp,gfortran,gcov}
+-	rm -f /etc/env.d/{binutils,gcc}/config-${CTARGET}
++	rm -f @GENTOO_PORTAGE_EPREFIX@/usr/${CTARGET}/{sys-include,usr}
++	rmdir @GENTOO_PORTAGE_EPREFIX@/usr/${CTARGET}/{include/asm,include} 2>/dev/null
++	rm -f @GENTOO_PORTAGE_EPREFIX@/usr/bin/${CTARGET}-{gcc,{c,g}++,cpp,gfortran,gcov}
++	rm -f @GENTOO_PORTAGE_EPREFIX@/etc/env.d/{binutils,gcc}/config-${CTARGET}
+ 
+ 	# clean out files from crossdev itself
+-	[[ -e /var/db/pkg/cross-${CTARGET} ]] && rmdir /var/db/pkg/cross-${CTARGET}
+-	rm -f /usr/bin/${CTARGET}-{emerge,fix-root,pkg-config} /usr/bin/emerge-${CTARGET}
++	[[ -e @GENTOO_PORTAGE_EPREFIX@/var/db/pkg/cross-${CTARGET} ]] && rmdir @GENTOO_PORTAGE_EPREFIX@/var/db/pkg/cross-${CTARGET}
++	rm -f @GENTOO_PORTAGE_EPREFIX@/usr/bin/${CTARGET}-{emerge,fix-root,pkg-config} @GENTOO_PORTAGE_EPREFIX@/usr/bin/emerge-${CTARGET}
+ 
+ 	for f in make.{conf,globals,profile} ; do
+-		f="/usr/${CTARGET}/etc/${f}"
++		f="@GENTOO_PORTAGE_EPREFIX@/usr/${CTARGET}/etc/${f}"
+ 		[[ -L ${f} ]] && rm -f ${f}
+-		f="/usr/${CTARGET}/etc/portage/${f##*/}"
++		f="@GENTOO_PORTAGE_EPREFIX@/usr/${CTARGET}/etc/portage/${f##*/}"
+ 		[[ -L ${f} ]] && rm -f ${f}
+ 	done
+-	find /usr/share/crossdev/etc/ -type f | \
++	find @GENTOO_PORTAGE_EPREFIX@/usr/share/crossdev/etc/ -type f | \
+ 	while read f ; do
+ 		f1=${f}
+ 		[[ ! -e ${f1} ]] && continue
+ 		m1=$(set -- `md5sum ${f1}`; echo $1)
+-		f2=/usr/${CTARGET}${f#/usr/share/crossdev}
++		f2=@GENTOO_PORTAGE_EPREFIX@/usr/${CTARGET}${f#/usr/share/crossdev}
+ 		[[ ! -e ${f2} ]] && continue
+ 		m2=$(set -- `md5sum ${f2}`; echo $1)
+ 		if [[ ${m1} == ${m2} ]] ; then
+@@ -387,7 +387,8 @@ uninstall() {
+ 	done
+ 
+ 	# clean out the sysroot, prompting the user if need be
+-	for d in /usr/lib/gcc{,-lib}/${CTARGET} /usr/${CTARGET} ; do
++	for d in @GENTOO_PORTAGE_EPREFIX@/usr/lib/gcc{,-lib}/${CTARGET} \
++			@GENTOO_PORTAGE_EPREFIX@/usr/${CTARGET} ; do
+ 		if [[ ! -d ${d} ]] ; then
+ 			rm -f "${d}"
+ 		else
+@@ -846,7 +847,7 @@ set_env() {
+ 	output="env/cross-${CTARGET}/${pkg}.conf"
+ 	cat <<-EOF > "${output}"
+ 	SYMLINK_LIB=no
+-	COLLISION_IGNORE="\${COLLISION_IGNORE} /usr/lib/debug/.build-id"
++	COLLISION_IGNORE="\${COLLISION_IGNORE} @GENTOO_PORTAGE_EPREFIX@/usr/lib/debug/.build-id"
+ 	$(printf '%b' "${env}")
+ 	$(printf '%b' "${AENV}")
+ 	EOF
+@@ -987,21 +988,21 @@ done
+ set_metadata
+ 
+ # filter out revdep rebuild stuff #182601
+-mkdir -p /etc/revdep-rebuild
+-echo "SEARCH_DIRS_MASK=/usr/${CTARGET}" > /etc/revdep-rebuild/05cross-${CTARGET}
++mkdir -p @GENTOO_PORTAGE_EPREFIX@/etc/revdep-rebuild
++echo "SEARCH_DIRS_MASK=@GENTOO_PORTAGE_EPREFIX@/usr/${CTARGET}" > @GENTOO_PORTAGE_EPREFIX@/etc/revdep-rebuild/05cross-${CTARGET}
+ 
+ hr
+ 
+ #######################################
+ ### Create links for helper scripts ###
+ 
+-mkdir -p /usr/${CTARGET}
++mkdir -p @GENTOO_PORTAGE_EPREFIX@/usr/${CTARGET}
+ emerge-wrapper --target ${CTARGET} --init || exit 1
+ 
+ #################
+ emerged_with_use() {
+ 	local pkg=$1 use=$2
+-	grep -qs ${use} /var/db/pkg/cross-${CTARGET}/${pkg}-*/USE
++	grep -qs ${use} @GENTOO_PORTAGE_EPREFIX@/var/db/pkg/cross-${CTARGET}/${pkg}-*/USE
+ }
+ set_eopts_on_pkg_status() {
+ 	emerged_with_use "$@" \
+diff --git a/wrappers/cross-pkg-config b/wrappers/cross-pkg-config
+index 37f3690..b838bf5 100755
+--- a/wrappers/cross-pkg-config
++++ b/wrappers/cross-pkg-config
+@@ -57,7 +57,7 @@ if [ -z "${SYSROOT}" ] ; then
+ 		# /usr/<target>
+ 		CHOST=${0##*/}
+ 		CHOST=${CHOST%-pkg-config}
+-		SYSROOT="/usr/${CHOST}"
++		SYSROOT="@GENTOO_PORTAGE_EPREFIX@/usr/${CHOST}"
+ 		if [ -z "${CHOST}" ] || [ ! -d "${SYSROOT}" ] ; then
+ 			error "Need \$ROOT or \$STAGEDIR set first"
+ 		fi
+diff --git a/wrappers/etc/portage/make.conf b/wrappers/etc/portage/make.conf
+index 82e489b..8dc5372 100644
+--- a/wrappers/etc/portage/make.conf
++++ b/wrappers/etc/portage/make.conf
+@@ -5,7 +5,7 @@ ARCH=__ARCH__
+ HOSTCC=__CBUILD__-gcc
+ E_MACHINE=__E_MACHINE__
+ 
+-ROOT=/usr/${CHOST}/
++ROOT=@GENTOO_PORTAGE_EPREFIX@/usr/${CHOST}/
+ 
+ ACCEPT_KEYWORDS="__ARCH__ ~__ARCH__"
+ 
