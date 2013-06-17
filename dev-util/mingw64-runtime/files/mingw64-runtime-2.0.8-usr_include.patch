@@ -1,0 +1,22 @@
+diff -urpN mingw-w64-v2.0.8.orig/mingw-w64-crt/Makefile.am mingw-w64-v2.0.8/mingw-w64-crt/Makefile.am
+--- mingw-w64-v2.0.8.orig/mingw-w64-crt/Makefile.am	2013-06-14 10:07:05.274154932 +0200
++++ mingw-w64-v2.0.8/mingw-w64-crt/Makefile.am	2013-06-14 10:21:34.841007859 +0200
+@@ -13,7 +13,7 @@
+ #AUTOMAKE_OPTIONS = color-tests
+ 
+ if WITHSYSROOT
+-  sysincludes=-I@TARGET_SYSTEM_ROOT@/$(host)/include
++  sysincludes=-I@TARGET_SYSTEM_ROOT@/$(host)/usr/include
+   withsys=--with-sysroot=@TARGET_SYSTEM_ROOT@
+ else
+   sysincludes=
+diff -urpN mingw-w64-v2.0.8.orig/mingw-w64-headers/Makefile.am mingw-w64-v2.0.8/mingw-w64-headers/Makefile.am
+--- mingw-w64-v2.0.8.orig/mingw-w64-headers/Makefile.am	2013-06-14 10:07:05.274154932 +0200
++++ mingw-w64-v2.0.8/mingw-w64-headers/Makefile.am	2013-06-14 10:20:57.257007887 +0200
+@@ -1,5 +1,5 @@
+ 
+-baseheaddir = $(includedir)/../$(host)/include
++baseheaddir = $(includedir)/../$(host)/usr/include
+ sysheaddir = $(baseheaddir)/sys
+ secheaddir = $(baseheaddir)/sec_api
+ secsysheaddir = $(baseheaddir)/sec_api/sys
