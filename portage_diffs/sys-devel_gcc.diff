@@ -1,0 +1,11 @@
+--- usr/portage/sys-devel/gcc/gcc-4.7.2-r1.ebuild	2013-04-02 20:04:28.000000000 +0200
++++ overlay/cpcf/sys-devel/gcc/gcc-4.7.2-r01.1.ebuild	2013-06-17 14:45:35.133008016 +0200
+@@ -129,7 +129,7 @@ src_compile() {
+ 			# to allow the linux-x86-on-amd64.patch become useful, we need
+ 			# to enable multilib, even if there is just one multilib option.
+ 			EXTRA_ECONF="${EXTRA_ECONF} --enable-multilib"
+-			if [[ ${CBUILD:-${CHOST}} == "${CHOST}" ]]; then
++			if [[ ${CBUILD:-${CHOST}} == "${CHOST}" ]] && has_multilib_profile; then
+ 				# we might be on x86_64-linux, but don't do cross-compile, so
+ 				# tell the host-compiler to really create 32bits (for stage1)
+ 				# (real x86-linux-gcc also accept -m32).
