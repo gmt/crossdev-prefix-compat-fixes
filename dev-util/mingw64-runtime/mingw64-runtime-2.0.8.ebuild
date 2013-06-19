@@ -20,7 +20,7 @@ SRC_URI="mirror://sourceforge/mingw-w64/mingw-w64-v${PV}.tar.gz"
 
 LICENSE="BSD"
 SLOT="0"
-KEYWORDS="~amd64 ~x86"
+KEYWORDS="~amd64 ~x86 ~x86-linux ~amd64-linux"
 IUSE="crosscompile_opts_headers-only doc"
 RESTRICT="strip"
 
